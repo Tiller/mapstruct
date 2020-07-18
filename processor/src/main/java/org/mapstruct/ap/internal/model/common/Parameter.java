@@ -13,6 +13,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
 
 import org.mapstruct.ap.internal.gem.ContextGem;
+import org.mapstruct.ap.internal.gem.MappingDefaultGem;
 import org.mapstruct.ap.internal.gem.MappingTargetGem;
 import org.mapstruct.ap.internal.gem.TargetTypeGem;
 import org.mapstruct.ap.internal.util.Collections;
@@ -29,6 +30,7 @@ public class Parameter extends ModelElement {
     private final String originalName;
     private final Type type;
     private final boolean mappingTarget;
+    private final boolean mappingDefault;
     private final boolean targetType;
     private final boolean mappingContext;
 
@@ -40,25 +42,27 @@ public class Parameter extends ModelElement {
         this.originalName = name;
         this.type = type;
         this.mappingTarget = MappingTargetGem.instanceOn( element ) != null;
+        this.mappingDefault = MappingDefaultGem.instanceOn( element ) != null;
         this.targetType = TargetTypeGem.instanceOn( element ) != null;
         this.mappingContext = ContextGem.instanceOn( element ) != null;
         this.varArgs = varArgs;
     }
 
-    private Parameter(String name, Type type, boolean mappingTarget, boolean targetType, boolean mappingContext,
-                      boolean varArgs) {
+    private Parameter(String name, Type type, boolean mappingTarget, boolean mappingDefault, boolean targetType,
+    		          boolean mappingContext, boolean varArgs) {
         this.element = null;
         this.name = name;
         this.originalName = name;
         this.type = type;
         this.mappingTarget = mappingTarget;
+        this.mappingDefault = mappingDefault;
         this.targetType = targetType;
         this.mappingContext = mappingContext;
         this.varArgs = varArgs;
     }
 
     public Parameter(String name, Type type) {
-        this( name, type, false, false, false, false );
+        this( name, type, false, false, false, false, false );
     }
 
     public Element getElement() {
@@ -79,6 +83,10 @@ public class Parameter extends ModelElement {
 
     public boolean isMappingTarget() {
         return mappingTarget;
+    }
+
+    public boolean isMappingDefault() {
+        return mappingDefault;
     }
 
     @Override
@@ -146,6 +154,7 @@ public class Parameter extends ModelElement {
             true,
             false,
             false,
+            false,
             false
         );
     }
@@ -183,12 +192,16 @@ public class Parameter extends ModelElement {
         return parameters.stream().filter( Parameter::isMappingTarget ).findAny().orElse( null );
     }
 
+    public static Parameter getMappingDefaultParameter(List<Parameter> parameters) {
+        return parameters.stream().filter( Parameter::isMappingDefault ).findAny().orElse( null );
+    }
+
     public static Parameter getTargetTypeParameter(List<Parameter> parameters) {
         return parameters.stream().filter( Parameter::isTargetType ).findAny().orElse( null );
     }
 
     private static boolean isSourceParameter( Parameter parameter ) {
-        return !parameter.isMappingTarget() && !parameter.isTargetType() && !parameter.isMappingContext();
+        return !parameter.isMappingTarget() && !parameter.isMappingDefault() && !parameter.isTargetType() && !parameter.isMappingContext();
     }
 
 }

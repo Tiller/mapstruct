@@ -120,6 +120,16 @@ public abstract class BuiltInMethod implements Method {
     }
 
     /**
+     * TODO
+     *
+     * @return {@code null}
+     */
+    @Override
+    public Parameter getMappingDefaultParameter() {
+        return null;
+    }
+
+    /**
      * target type parameter mechanism not supported for built-in methods
      *
      * @return {@code null}

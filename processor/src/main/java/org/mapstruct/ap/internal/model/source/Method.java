@@ -83,6 +83,11 @@ public interface Method {
     Parameter getMappingTargetParameter();
 
     /**
+     * TODO
+     */
+    Parameter getMappingDefaultParameter();
+
+    /**
      * Returns whether the meethod is designated as bean factory for
      * mapping target {@link  org.mapstruct.ObjectFactory }
      *

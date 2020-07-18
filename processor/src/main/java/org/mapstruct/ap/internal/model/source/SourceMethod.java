@@ -44,6 +44,7 @@ public class SourceMethod implements Method {
     private final List<Parameter> parameters;
     private final Parameter mappingTargetParameter;
     private final Parameter targetTypeParameter;
+    private final Parameter mappingDefaultParameter;
     private final boolean isObjectFactory;
     private final Type returnType;
     private final Accessibility accessibility;
@@ -208,6 +209,7 @@ public class SourceMethod implements Method {
 
         this.mappingTargetParameter = Parameter.getMappingTargetParameter( parameters );
         this.targetTypeParameter = Parameter.getTargetTypeParameter( parameters );
+        this.mappingDefaultParameter = Parameter.getMappingDefaultParameter( parameters );
         this.hasObjectFactoryAnnotation = ObjectFactoryGem.instanceOn( executable ) != null;
         this.isObjectFactory = determineIfIsObjectFactory();
 
@@ -220,8 +222,9 @@ public class SourceMethod implements Method {
     private boolean determineIfIsObjectFactory() {
         boolean hasNoSourceParameters = getSourceParameters().isEmpty();
         boolean hasNoMappingTargetParam = getMappingTargetParameter() == null;
+        boolean hasNoMappingDefaultParam = getMappingDefaultParameter() == null;
         return !isLifecycleCallbackMethod() && !returnType.isVoid()
-            && hasNoMappingTargetParam
+            && hasNoMappingTargetParam && hasNoMappingDefaultParam
             && ( hasObjectFactoryAnnotation || hasNoSourceParameters );
     }
 
@@ -311,6 +314,11 @@ public class SourceMethod implements Method {
     @Override
     public Parameter getMappingTargetParameter() {
         return mappingTargetParameter;
+    }
+
+    @Override
+    public Parameter getMappingDefaultParameter() {
+        return mappingDefaultParameter;
     }
 
     @Override

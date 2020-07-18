@@ -295,7 +295,8 @@ public class TypeSelector implements MethodSelector {
         for ( ParameterBinding candidate : candidateParameters ) {
             if ( parameter.isTargetType() == candidate.isTargetType()
                 && parameter.isMappingTarget() == candidate.isMappingTarget()
-                && parameter.isMappingContext() == candidate.isMappingContext() ) {
+                && parameter.isMappingContext() == candidate.isMappingContext()
+                && !parameter.isMappingDefault() ) {
                 result.add( candidate );
             }
         }

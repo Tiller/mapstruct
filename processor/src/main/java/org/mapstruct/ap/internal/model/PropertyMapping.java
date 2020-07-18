@@ -143,6 +143,7 @@ public class PropertyMapping extends ModelElement {
         private MappingControl mappingControl;
         private MappingReferences forgeMethodWithMappingReferences;
         private boolean forceUpdateMethod;
+        private boolean bypassDefault;
         private boolean forgedNamedBased = true;
         private NullValueCheckStrategyGem nvcs;
         private NullValuePropertyMappingStrategyGem nvpms;
@@ -342,6 +343,10 @@ public class PropertyMapping extends ModelElement {
         }
 
         private Assignment getDefaultValueAssignment( Assignment rhs ) {
+        	if (bypassDefault) {
+        		return null;
+        	}
+        	
             if ( defaultValue != null
                 &&  ( !rhs.getSourceType().isPrimitive() || rhs.getSourcePresenceCheckerReference() != null) ) {
                 // cannot check on null source if source is primitive unless it has a presence checker
@@ -357,23 +362,46 @@ public class PropertyMapping extends ModelElement {
                     .build();
                 return build.getAssignment();
             }
-            if ( defaultJavaExpression != null
-                && ( !rhs.getSourceType().isPrimitive() || rhs.getSourcePresenceCheckerReference() != null) ) {
-                // cannot check on null source if source is primitive unless it has a presence checker
-                PropertyMapping build = new JavaExpressionMappingBuilder()
-                    .javaExpression( defaultJavaExpression )
+            if ( !rhs.getSourceType().isPrimitive() || rhs.getSourcePresenceCheckerReference() != null ) {
+	            if ( defaultJavaExpression != null ) {
+	                // cannot check on null source if source is primitive unless it has a presence checker
+	                PropertyMapping build = new JavaExpressionMappingBuilder()
+	                    .javaExpression( defaultJavaExpression )
+	                    .dependsOn( dependsOn )
+	                    .existingVariableNames( existingVariableNames )
+	                    .mappingContext( ctx )
+	                    .sourceMethod( method )
+	                    .target( targetPropertyName, targetReadAccessor, targetWriteAccessor )
+	                    .build();
+	                return build.getAssignment();
+	            } else if (method.getMappingDefaultParameter() != null) {
+            		return new PropertyMappingBuilder()
+            		.sourceReference(new SourceReference.BuilderFromProperty()
+                    		.sourceParameter(method.getMappingDefaultParameter())
+                    		.name(targetPropertyName)
+                    		.readAccessor(targetReadAccessor)
+                    		.type(targetType)
+                    		.build())
+                    .formattingParameters( formattingParameters )
+                    .selectionParameters( selectionParameters )
                     .dependsOn( dependsOn )
                     .existingVariableNames( existingVariableNames )
                     .mappingContext( ctx )
                     .sourceMethod( method )
+                    .bypassDefault(true)
                     .target( targetPropertyName, targetReadAccessor, targetWriteAccessor )
-                    .build();
-                return build.getAssignment();
+                    .build().getAssignment();
+        		}
             }
             return null;
         }
 
-        private Assignment assignToPlain(Type targetType, AccessorType targetAccessorType,
+        public PropertyMappingBuilder bypassDefault(boolean b) {
+			this.bypassDefault = b;
+			return this;
+		}
+
+		private Assignment assignToPlain(Type targetType, AccessorType targetAccessorType,
                                          Assignment rightHandSide) {
 
             Assignment result;
@@ -646,12 +674,14 @@ public class PropertyMapping extends ModelElement {
                  sourceType = sourceRHS.getSourceType();
             }
             if ( forgedNamedBased && !canGenerateAutoSubMappingBetween( sourceType, targetType ) ) {
+            	ctx.getMessager().printMessage(Message.PROCESSING_NOTE, new Object[] { "# " + forgedNamedBased + " " + sourceType + " " + targetType});
                 return null;
             }
 
 
             //Fail fast. If we could not find the method by now, no need to try
             if ( sourceType.isPrimitive() || targetType.isPrimitive() ) {
+            	ctx.getMessager().printMessage(Message.PROCESSING_NOTE, new Object[] { "@ " + sourceType + " " + targetType});
                 return null;
             }
 

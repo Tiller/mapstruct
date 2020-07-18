@@ -260,6 +260,41 @@ public class BeanMappingMethod extends NormalTypeMappingMethod {
                 // map parameters without a mapping
                 applyParameterNameBasedMapping();
             }
+            
+            if (method.getMappingDefaultParameter() != null) {
+	            for (final Entry<String, Accessor> entry : unprocessedTargetProperties.entrySet()) {
+	            	ctx.getMessager().printMessage(Message.PROCESSING_NOTE, new Object[] { entry.toString() });
+	            	
+	            	String propertyName = entry.getKey();
+	
+	                Accessor targetPropertyReadAccessor = method.getResultType().getPropertyReadAccessors().get( propertyName );
+	                Accessor targetPropertyWriteAccessor = entry.getValue();
+	                
+	                SourceReference reference = new SourceReference.BuilderFromProperty()
+	                		.sourceParameter(method.getMappingDefaultParameter())
+	                		.name(propertyName)
+	                		.readAccessor(targetPropertyReadAccessor)
+	                		.type(ctx.getTypeFactory().getType(targetPropertyReadAccessor.getAccessedType())) // TODO MLO
+	                		.build();
+	
+	            	ctx.getMessager().printMessage(Message.PROCESSING_NOTE, new Object[] { targetPropertyReadAccessor + " - " + targetPropertyWriteAccessor});
+	                
+	            	PropertyMapping propertyMapping = new PropertyMappingBuilder()
+			        		.sourceReference(reference)
+			                .selectionParameters( selectionParameters )
+			                .existingVariableNames( existingVariableNames )
+			                .mappingContext( ctx )
+			                .sourceMethod( method )
+			                .bypassDefault(true)
+			                .target( propertyName, targetPropertyReadAccessor, targetPropertyWriteAccessor )
+			                .build();
+	                
+	                propertyMappings.add(propertyMapping);
+	                
+	
+	            	ctx.getMessager().printMessage(Message.PROCESSING_NOTE, new Object[] { propertyMappings});
+	            }
+            }
 
             // Process the unprocessed defined targets
             handleUnprocessedDefinedTargets();
